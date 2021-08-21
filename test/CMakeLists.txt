@@ -2,6 +2,13 @@ add_executable(libc_tests)
 target_include_directories(libc_tests PRIVATE . test/)
 target_include_directories(libc_tests SYSTEM PRIVATE ${CMOCKA_INCLUDE_DIR})
 target_link_libraries(libc_tests PRIVATE c ${CMOCKA_LIBRARIES})
+
+list(APPEND desired_libc_tests_flags
+	"-Wno-stringop-overflow"
+	"-Wno-unused-parameter"
+)
+apply_supported_c_compiler_flags(libc_tests PRIVATE desired_libc_tests_flags)
+
 target_sources(libc_tests PRIVATE
 	main.c
 	ctype/ctype_tests.c
@@ -78,6 +85,11 @@ target_sources(libc_tests PRIVATE
 add_custom_target(test-clear-results
 	COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_BINARY_DIR}/test/*.xml
 	COMMENT "Removing XML files in the test/ directory"
+)
+
+add_custom_target(test-libc
+	COMMAND export CMOCKA_MESSAGE_OUTPUT=stdout
+	COMMAND libc_tests
 )
 
 #############################

@@ -57,7 +57,7 @@ target_compile_definitions(gdtoa INTERFACE
 # Libc #
 ########
 
-add_library(c STATIC)
+add_library(c)
 target_link_libraries(c PRIVATE printf openlibm gdtoa)
 target_include_directories(c
 	PRIVATE
