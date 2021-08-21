@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.17)
-project(EmbeddedArtistryLibc
-	VERSION 1.0
-	DESCRIPTION "A libc implementation for microcontroller-based embedded systems."
+project(MYPROJECT
+	VERSION 0.1
+	DESCRIPTION "MYDESCRIPTION"
 	LANGUAGES C CXX ASM)
 
 set_property(GLOBAL PROPERTY C_STANDARD 11)
+set_property(GLOBAL PROPERTY CXX_STANDARD 17)
 
 include(cmake/CPM.cmake)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR LIBC_BUILD_TESTING)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR PROJECTVARNAME_BUILD_TESTING)
     include(CTest)
 endif()
 
@@ -26,6 +27,12 @@ include(Packaging.cmake)
 # If we're not a subproject, globally apply our warning flags
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   add_compile_options(-Wall -Wextra)
+endif()
+
+# Set default flags
+check_c_compiler_flag("-Wno-unknown-pragmas" _Wno_unknown_pragmas)
+if(_Wno_unknown_pragmas)
+  add_compile_options("-Wno-unknown-pragmas")
 endif()
 
 # This function can be used to generate a linker map file on an executable target
@@ -56,60 +63,10 @@ if(ENABLE_COVERAGE)
 endif()
 
 #####################
-# Printf Dependency #
-#####################
-
-CPMAddPackage(
-  NAME printf
-  GITHUB_REPOSITORY mpaland/printf
-  VERSION 4.0.0
-  DOWNLOAD_ONLY
-)
-
-add_library(printf INTERFACE)
-target_sources(printf INTERFACE ${printf_SOURCE_DIR}/printf.c)
-target_include_directories(printf SYSTEM INTERFACE ${printf_SOURCE_DIR})
-
-if(LIBC_TESTING_IS_ENABLED)
-  add_executable(printf_tests)
-  target_sources(printf_tests PRIVATE ${printf_SOURCE_DIR}/test/test_suite.cpp)
-  target_include_directories(printf_tests PRIVATE ${printf_SOURCE_DIR})
-  install(FILES ${printf_SOURCE_DIR}/printf.h DESTINATION include)
-  target_linker_map(printf_tests)
-  set_target_properties(printf_tests PROPERTIES CXX_STANDARD 11)
-
-  # Re-build + execute tests, printing test information to the console instead of the XML file
-  add_custom_target(test-printf printf_tests)
-
-  add_test(NAME Printf.Test
-    COMMAND printf_tests -s -r junit -o ${CMAKE_BINARY_DIR}/printf_tests.xml
-  )
-endif()
-
-#######################
-# Openlibm Dependency #
-#######################
-
-CPMAddPackage(
-  NAME openlibm
-  GITHUB_REPOSITORY JuliaMath/openlibm
-  VERSION 0.7.0
-  DOWNLOAD_ONLY
-)
-
-add_library(openlibm INTERFACE)
-target_include_directories(openlibm SYSTEM INTERFACE
-	${openlibm_SOURCE_DIR}/src
-	${openlibm_SOURCE_DIR}/include
-)
-install(DIRECTORY ${openlibm_SOURCE_DIR}/include/ DESTINATION include)
-install(DIRECTORY ${openlibm_SOURCE_DIR}/src DESTINATION include FILES_MATCHING PATTERN "*.h")
-
-#####################
 # CMocka Dependency #
 #####################
 
-if(LIBC_TESTING_IS_ENABLED)
+if(PROJECTVARNAME_TESTING_IS_ENABLED)
   find_package(cmocka QUIET)
 
   if(NOT cmocka_FOUND)
@@ -178,7 +135,6 @@ endif()
 # Process Source Tree #
 #######################
 
-add_subdirectory(arch/${CMAKE_SYSTEM_PROCESSOR})
 add_subdirectory(src)
 
 #####################
