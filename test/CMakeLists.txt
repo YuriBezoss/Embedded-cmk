@@ -1,7 +1,9 @@
 add_executable(libc_tests)
 # Workaround for the potential to have CMake block our include directory if
 # -nostdinc is used and the header is in a CMake implicit include path
-list(REMOVE_ITEM CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${CMOCKA_INCLUDE_DIR}")
+if(NOSTDINC_FOR_DEPENDENTS)
+	list(REMOVE_ITEM CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${CMOCKA_INCLUDE_DIR}")
+endif()
 target_include_directories(libc_tests PRIVATE . test/)
 target_include_directories(libc_tests SYSTEM PRIVATE ${CMOCKA_INCLUDE_DIR})
 target_link_libraries(libc_tests PRIVATE c ${CMOCKA_LIBRARIES})

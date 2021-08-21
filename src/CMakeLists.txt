@@ -70,14 +70,43 @@ target_include_directories(c SYSTEM
 		${PROJECT_SOURCE_DIR}/arch/x86_64/include
 		$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
 )
-target_compile_definitions(c INTERFACE
-	$<$<BOOL:${HIDE_UNIMPLEMENTED_C_APIS}>:DISABLE_UNIMPLEMENTED_LIBC_APIS>
+target_compile_definitions(c
+	INTERFACE
+		$<$<BOOL:${HIDE_UNIMPLEMENTED_C_APIS}>:DISABLE_UNIMPLEMENTED_LIBC_APIS>
+	PUBLIC
+		$<$<BOOL:${ENABLE_GNU_EXTENSIONS}>:_GNU_SOURCE>
+	PRIVATE
+		# Define a DEBUG symbol if we're using a Debug or Release with Debug Info buildtype
+		$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>,$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>>:DEBUG>
 )
 
-list(APPEND desired_libc_private_flags "-Wno-nonnull-compare" "-Wno-unknown-pragmas")
+# Apply unconditional private flags here
+list(APPEND libc_private_compile_flags
+	"-Wno-nonnull-compare"
+	"-Wno-unknown-pragmas"
+)
 
-apply_supported_compiler_flags(C c PRIVATE desired_libc_private_flags)
-apply_supported_compiler_flags(C c PUBLIC "-nostdinc")
+# Apply unconditional public flags here
+list(APPEND libc_public_compile_flags
+	""
+)
+
+if(DISABLE_BUILTINS)
+	list(APPEND libc_private_compile_flags -fno-builtin)
+endif()
+
+if(DISABLE_STACK_PROTECTION)
+	list(APPEND libc_public_compile_flags -fno-stack-protector)
+endif()
+
+if(NOSTDINC_FOR_DEPENDENTS)
+	list(APPEND libc_public_compile_flags -nostdinc)
+else()
+	list(APPEND libc_private_compile_flags -nostdinc)
+endif()
+
+apply_supported_compiler_flags(C c PRIVATE libc_private_compile_flags)
+apply_supported_compiler_flags(C c PUBLIC libc_public_compile_flags)
 
 if("${CMAKE_CROSSCOMPILING}")
 	check_c_compiler_flag("-nostdlib" _nostdlib)

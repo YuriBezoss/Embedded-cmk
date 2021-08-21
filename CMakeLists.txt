@@ -8,13 +8,11 @@ set_property(GLOBAL PROPERTY C_STANDARD 11)
 
 include(cmake/CPM.cmake)
 
-# Only use testing if we're not somebody's subproject!
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR LIBC_BUILD_TESTING)
     include(CTest)
 endif()
 
 include(cmake/CheckAndApplyFlags.cmake)
-
 include(BuildOptions.cmake)
 
 ##################
@@ -41,7 +39,7 @@ add_library(printf INTERFACE)
 target_sources(printf INTERFACE ${printf_SOURCE_DIR}/printf.c)
 target_include_directories(printf SYSTEM INTERFACE ${printf_SOURCE_DIR})
 
-if(BUILD_TESTING)
+if(LIBC_TESTING_IS_ENABLED)
   add_executable(printf_tests)
   target_sources(printf_tests PRIVATE ${printf_SOURCE_DIR}/test/test_suite.cpp)
   target_include_directories(printf_tests PRIVATE ${printf_SOURCE_DIR})
@@ -76,21 +74,23 @@ target_include_directories(openlibm SYSTEM INTERFACE
 # CMocka Dependency #
 #####################
 
-find_package(cmocka QUIET)
+if(LIBC_TESTING_IS_ENABLED)
+  find_package(cmocka QUIET)
 
-if(NOT cmocka_FOUND)
-  CPMAddPackage(
-    NAME cmocka
-    GIT_REPOSITORY https://git.cryptomilk.org/projects/cmocka.git/
-    VERSION 1.1.5
-    GIT_TAG cmocka-1.1.5
-    OPTIONS
-      "WITH_EXAMPLES OFF"
-      "CMAKE_BUILD_TYPE DEBUG"
-  )
+  if(NOT cmocka_FOUND)
+    CPMAddPackage(
+      NAME cmocka
+      GIT_REPOSITORY https://git.cryptomilk.org/projects/cmocka.git/
+      VERSION 1.1.5
+      GIT_TAG cmocka-1.1.5
+      OPTIONS
+        "WITH_EXAMPLES OFF"
+        "CMAKE_BUILD_TYPE DEBUG"
+    )
 
-  # Maintain build compatibility between find_package and CMakeLists.txt variants.
-  set(CMOCKA_LIBRARIES cmocka)
+    # Maintain build compatibility between find_package and CMakeLists.txt variants.
+    set(CMOCKA_LIBRARIES cmocka)
+  endif()
 endif()
 
 #######################
@@ -103,6 +103,6 @@ add_subdirectory(src)
 # Process Test Tree #
 #####################
 
-if(BUILD_TESTING)
+if(LIBC_TESTING_IS_ENABLED)
   add_subdirectory(test)
 endif()
