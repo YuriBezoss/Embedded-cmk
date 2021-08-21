@@ -44,12 +44,42 @@ if(CPPCHECK)
     endforeach()
   endif()
 
+  ### Custom Rules
+  if(NOT CPPCHECK_CUSTOM_RULES)
+    set(CPPCHECK_CUSTOM_RULES
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/BitwiseOperatorInConditional/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/CollapsibleIfStatements/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/EmptyElseBlock/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/EmptyCatchStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/EmptyDoWhileStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/EmptyForStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/EmptyIfStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/EmptySwitchStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/ForLoopShouldBeWhileLoop/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/InvertedLogic/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/MultipleUnaryOperator/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/RedundantConditionalOperator/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/RedundantIfStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/UnnecessaryElseStatement/rule.xml
+        ${CMAKE_CURRENT_LIST_DIR}/cppcheck-rules/UseStlAlgorithm/rule.xml
+      CACHE STRING "Custom rule files to use with CppCheck")
+  endif()
+
+  if(CPPCHECK_ADDITIONAL_CUSTOM_RULES)
+    list(APPEND CPPCHECK_CUSTOM_RULES ${CPPCHECK_ADDITIONAL_CUSTOM_RULES})
+  endif()
+
+  foreach(rule ${CPPCHECK_CUSTOM_RULES})
+    list(APPEND CPPCHECK_CUSTOM_RULES_ARG --rule-file=${rule})
+  endforeach()
+
   # With CppCheck, default arguments are shared between the analysis-during-build
   # configuration and with the cppcheck build targets
   set(CPPCHECK_DEFAULT_ARGS
       ${CPPCHECK} --quiet --enable=${CPPCHECK_ENABLE_CHECKS} --force
       ${CPPCHECK_INCLUDE_DIRS_ARG}
       ${CPPCHECK_EXCLUDE_ARGS}
+      ${CPPCHECK_CUSTOM_RULES_ARG}
   )
 
   ### Static analysis build option

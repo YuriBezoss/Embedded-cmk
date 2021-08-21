@@ -38,23 +38,32 @@ if(PROJECTVARNAME_TESTING_IS_ENABLED)
   include(cmake/test/cmocka.cmake)
 endif()
 
+# Enable Catch2 Support if testing is enabled
+if(PROJECTVARNAME_TESTING_IS_ENABLED)
+  include(cmake/test/catch2.cmake)
+endif()
+
+# Specifies default compiler flags for the project
+include(cmake/compiler/DefaultCompilerSettings.cmake)
+# Specifies default linker flags for the project
+include(cmake/linker/DefaultLinkerSettings.cmake)
+
 # Define Packaging Rules
 include(Packaging.cmake)
 
-##################
-# Compiler Flags #
-##################
+#########################
+# External Dependencies #
+#########################
 
-# If we're not a subproject, globally apply our warning flags
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  add_compile_options(-Wall -Wextra)
-endif()
-
-# Set default flags
-check_c_compiler_flag("-Wno-unknown-pragmas" _Wno_unknown_pragmas)
-if(_Wno_unknown_pragmas)
-  add_compile_options("-Wno-unknown-pragmas")
-endif()
+# You can set an ETL_PROFILE variable option to control the profile header to include
+# The library is called etl
+CPMAddPackage(
+	NAME etl
+	GIT_REPOSITORY git@github.com:ETLCPP/etl.git
+	GIT_TAG master
+	OPTIONS
+		"BUILD_TESTS OFF"
+)
 
 ##########################
 # Enable Static Analysis #
@@ -89,3 +98,7 @@ include(cmake/analysis/complexity.cmake)
 enable_coverage_targets(MYPROJECT_tests)
 # Provides Doxygen documentation generation target
 include(cmake/documentation/doxygen.cmake)
+# Provides SLOCCount targets
+include(cmake/analysis/sloccount.cmake)
+# Provides vale documentation linting target
+include(cmake/analysis/vale.cmake)
