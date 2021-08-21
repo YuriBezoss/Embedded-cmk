@@ -70,6 +70,23 @@ target_include_directories(c SYSTEM
 		${PROJECT_SOURCE_DIR}/arch/x86_64/include
 		$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
 )
+target_compile_definitions(c INTERFACE
+	$<$<BOOL:${HIDE_UNIMPLEMENTED_C_APIS}>:DISABLE_UNIMPLEMENTED_LIBC_APIS>
+)
+
+list(APPEND desired_libc_private_flags "-Wno-nonnull-compare" "-Wno-unknown-pragmas")
+
+apply_supported_compiler_flags(C c PRIVATE desired_libc_private_flags)
+apply_supported_compiler_flags(C c PUBLIC "-nostdinc")
+
+if("${CMAKE_CROSSCOMPILING}")
+	check_c_compiler_flag("-nostdlib" _nostdlib)
+	if(_nostdlib)
+		target_link_options(c INTERFACE "-nostdlib")
+	else()
+		apply_supported_linker_flags(C c INTERFACE "-nolibc")
+	endif()
+endif()
 
 # Assert Module
 target_sources(c PRIVATE

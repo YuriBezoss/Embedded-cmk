@@ -1,4 +1,7 @@
 add_executable(libc_tests)
+# Workaround for the potential to have CMake block our include directory if
+# -nostdinc is used and the header is in a CMake implicit include path
+list(REMOVE_ITEM CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "${CMOCKA_INCLUDE_DIR}")
 target_include_directories(libc_tests PRIVATE . test/)
 target_include_directories(libc_tests SYSTEM PRIVATE ${CMOCKA_INCLUDE_DIR})
 target_link_libraries(libc_tests PRIVATE c ${CMOCKA_LIBRARIES})
@@ -6,8 +9,12 @@ target_link_libraries(libc_tests PRIVATE c ${CMOCKA_LIBRARIES})
 list(APPEND desired_libc_tests_flags
 	"-Wno-stringop-overflow"
 	"-Wno-unused-parameter"
+	"-Wno-nonnull-compare"
+	"-Wno-nonnull"
+	"-Wno-stringop-truncation"
+	"-Wno-unknown-pragmas"
 )
-apply_supported_c_compiler_flags(libc_tests PRIVATE desired_libc_tests_flags)
+apply_supported_compiler_flags(C libc_tests PRIVATE desired_libc_tests_flags)
 
 target_sources(libc_tests PRIVATE
 	main.c
