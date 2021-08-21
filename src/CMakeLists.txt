@@ -62,12 +62,11 @@ target_link_libraries(c PRIVATE printf openlibm gdtoa)
 target_include_directories(c
 	PRIVATE
 		${PROJECT_SOURCE_DIR}/include
-		${PROJECT_SOURCE_DIR}/arch/x86_64/include
+		${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
 )
-target_include_directories(c SYSTEM
-	INTERFACE
+target_include_directories(c SYSTEM INTERFACE
 		${PROJECT_SOURCE_DIR}/include
-		${PROJECT_SOURCE_DIR}/arch/x86_64/include
+		${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
 		$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_compile_definitions(c
