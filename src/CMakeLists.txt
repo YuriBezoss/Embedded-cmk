@@ -58,23 +58,26 @@ target_compile_definitions(gdtoa INTERFACE
 # Libc #
 ########
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
+
 # libc_core contains shared files and definitions that are used by libc and libc_hosted
 add_library(c_core INTERFACE)
-target_link_libraries(c_core INTERFACE printf openlibm gdtoa)
+target_link_libraries(c_core INTERFACE printf openlibm gdtoa architecture_specific)
 target_include_directories(c_core
 	INTERFACE
 		${PROJECT_SOURCE_DIR}/include
-		${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
 )
 
 # libc is a standalone version of the library
 add_library(c)
 target_link_libraries(c PRIVATE c_core)
+install(TARGETS c DESTINATION lib)
 
 # libc_hosted is designed to be used with an operating system that provides a full implementation
 # which can do the heavy lifting for missing pieces
 add_library(c_hosted)
 target_link_libraries(c_hosted PRIVATE c_core)
+install(TARGETS c_hosted DESTINATION lib)
 
 # Apply unconditional private flags here
 list(APPEND libc_private_compile_flags
@@ -104,8 +107,9 @@ endif()
 # Apply common settings to C and C_hosted targets
 foreach(target c c_hosted)
 	target_include_directories(${target}
-		INTERFACE SYSTEM
+		INTERFACE
 			$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
+		INTERFACE SYSTEM
 			${PROJECT_SOURCE_DIR}/include
 			${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
 	)
@@ -135,6 +139,11 @@ else()
 	if(_nostdlib)
 		target_link_options(c INTERFACE "-nostdlib")
 	endif()
+endif()
+
+check_c_compiler_flag("-nostartfiles" _nostartfiles)
+if("${_nostartfiles}")
+		target_link_options(c INTERFACE "-nostartfiles")
 endif()
 
 # Assert Module
