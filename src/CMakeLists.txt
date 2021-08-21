@@ -1,9 +1,8 @@
-
 #################
 # GDTOA Library #
 #################
-add_library(gdtoa STATIC)
-target_sources(gdtoa PRIVATE
+add_library(gdtoa INTERFACE)
+target_sources(gdtoa INTERFACE
 	gdtoa/src/dmisc.c
 	gdtoa/src/dtoa.c
 	gdtoa/src/g__fmt.c
@@ -46,8 +45,8 @@ target_sources(gdtoa PRIVATE
 	gdtoa/src/sum.c
 	gdtoa/src/ulp.c
 )
-target_include_directories(gdtoa PUBLIC gdtoa/include)
-target_compile_definitions(gdtoa PRIVATE
+target_include_directories(gdtoa INTERFACE gdtoa/include)
+target_compile_definitions(gdtoa INTERFACE
 	NO_ERRNO
 	IFNAN_CHECK
 	GDTOA_NO_ASSERT
@@ -59,7 +58,7 @@ target_compile_definitions(gdtoa PRIVATE
 ########
 
 add_library(c STATIC)
-target_link_libraries(c PRIVATE printf openlibm)
+target_link_libraries(c PRIVATE printf openlibm gdtoa)
 target_include_directories(c
 	PRIVATE
 		${PROJECT_SOURCE_DIR}/include
