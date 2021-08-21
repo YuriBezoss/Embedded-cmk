@@ -6,7 +6,7 @@ if(NOSTDINC_FOR_DEPENDENTS)
 endif()
 target_include_directories(libc_tests PRIVATE . test/)
 target_include_directories(libc_tests SYSTEM PRIVATE ${CMOCKA_INCLUDE_DIR})
-target_link_libraries(libc_tests PRIVATE c ${CMOCKA_LIBRARIES})
+target_link_libraries(libc_tests PRIVATE c_hosted ${CMOCKA_LIBRARIES})
 
 list(APPEND desired_libc_tests_flags
 	"-Wno-stringop-overflow"

@@ -1,6 +1,7 @@
 #################
 # GDTOA Library #
 #################
+
 add_library(gdtoa INTERFACE)
 target_sources(gdtoa INTERFACE
 	gdtoa/src/dmisc.c
@@ -57,27 +58,23 @@ target_compile_definitions(gdtoa INTERFACE
 # Libc #
 ########
 
-add_library(c)
-target_link_libraries(c PRIVATE printf openlibm gdtoa)
-target_include_directories(c
-	PRIVATE
-		${PROJECT_SOURCE_DIR}/include
-		${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
-)
-target_include_directories(c SYSTEM INTERFACE
-		${PROJECT_SOURCE_DIR}/include
-		${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
-		$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
-)
-target_compile_definitions(c
+# libc_core contains shared files and definitions that are used by libc and libc_hosted
+add_library(c_core INTERFACE)
+target_link_libraries(c_core INTERFACE printf openlibm gdtoa)
+target_include_directories(c_core
 	INTERFACE
-		$<$<BOOL:${HIDE_UNIMPLEMENTED_C_APIS}>:DISABLE_UNIMPLEMENTED_LIBC_APIS>
-	PUBLIC
-		$<$<BOOL:${ENABLE_GNU_EXTENSIONS}>:_GNU_SOURCE>
-	PRIVATE
-		# Define a DEBUG symbol if we're using a Debug or Release with Debug Info buildtype
-		$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>,$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>>:DEBUG>
+		${PROJECT_SOURCE_DIR}/include
+		${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
 )
+
+# libc is a standalone version of the library
+add_library(c)
+target_link_libraries(c PRIVATE c_core)
+
+# libc_hosted is designed to be used with an operating system that provides a full implementation
+# which can do the heavy lifting for missing pieces
+add_library(c_hosted)
+target_link_libraries(c_hosted PRIVATE c_core)
 
 # Apply unconditional private flags here
 list(APPEND libc_private_compile_flags
@@ -104,37 +101,61 @@ else()
 	list(APPEND libc_private_compile_flags -nostdinc)
 endif()
 
-apply_supported_compiler_flags(C c PRIVATE libc_private_compile_flags)
-apply_supported_compiler_flags(C c PUBLIC libc_public_compile_flags)
+# Apply common settings to C and C_hosted targets
+foreach(target c c_hosted)
+	target_include_directories(${target}
+		INTERFACE SYSTEM
+			$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
+			${PROJECT_SOURCE_DIR}/include
+			${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
+	)
 
-if("${CMAKE_CROSSCOMPILING}")
+	target_compile_definitions(${target}
+		INTERFACE
+			$<$<BOOL:${HIDE_UNIMPLEMENTED_C_APIS}>:DISABLE_UNIMPLEMENTED_LIBC_APIS>
+		PUBLIC
+			$<$<BOOL:${ENABLE_GNU_EXTENSIONS}>:_GNU_SOURCE>
+		PRIVATE
+			# Define a DEBUG symbol if we're using a Debug or Release with Debug Info buildtype
+			$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>,$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>>:DEBUG>
+	)
+
+	apply_supported_compiler_flags(C ${target} PRIVATE libc_private_compile_flags)
+	apply_supported_compiler_flags(C ${target} PUBLIC libc_public_compile_flags)
+endforeach()
+
+if(NOT ((${CMAKE_C_COMPILER_ID} STREQUAL "Clang") OR (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")))
+	check_c_compiler_flag("-nolibc" _nolibc)
+endif()
+
+if("${_nolibc}")
+	target_link_options(c INTERFACE "-nolibc")
+else()
 	check_c_compiler_flag("-nostdlib" _nostdlib)
 	if(_nostdlib)
 		target_link_options(c INTERFACE "-nostdlib")
-	else()
-		apply_supported_linker_flags(C c INTERFACE "-nolibc")
 	endif()
 endif()
 
 # Assert Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	assert/assert.c
 )
 
-# CRT Module - Currently not needed for "native" targets
-#target_sources(c PRIVATE
-#	crt/_Exit.c
-#	crt/abort.c
-#	crt/at_exit.c
-#	crt/at_quick_exit.c
-#	crt/crt.c
-#	crt/cxa_atexit.c
-#	crt/exit.c
-#	crt/quick_exit.c
-#)
+# CRT Module - Not needed for hosted targets
+target_sources(c PRIVATE
+	crt/_Exit.c
+	crt/abort.c
+	crt/at_exit.c
+	crt/at_quick_exit.c
+	crt/crt.c
+	crt/cxa_atexit.c
+	crt/exit.c
+	crt/quick_exit.c
+)
 
 # CType Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	ctype/isalnum.c
 	ctype/isalpha.c
 	ctype/isascii.c
@@ -154,31 +175,31 @@ target_sources(c PRIVATE
 )
 
 # locale Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	locale/langinfo.c
 )
 
 # math Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	math/fabs.c
 	math/fabsf.c
 )
 
 # stdio Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	stdio/asprintf.c
 	stdio/putchar.c
 	stdio/puts.c
 	stdio/vasprintf.c
 )
 
-# stdio Native Module
-target_sources(c PRIVATE
+# stdio Hosted Module
+target_sources(c_hosted PRIVATE
 	stdio/putchar_native.c
 )
 
 # stdlib Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	stdlib/abs.c
 	stdlib/atof.c
 	stdlib/atoi.c
@@ -207,7 +228,7 @@ target_sources(c PRIVATE
 )
 
 # string Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	string/memcmp.c
 	string/memcpy.c
 	string/memmem.c
@@ -241,20 +262,20 @@ target_sources(c PRIVATE
 )
 
 # support Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	support/fls.c
 	support/flsl.c
 	support/flsll.c
 )
 
 # time Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	time/asctime.c
 	time/asctime_r.c
 )
 
 # wchar Module
-target_sources(c PRIVATE
+target_sources(c_core INTERFACE
 	wchar/iswalnum.c
 	wchar/iswalpha.c
 	wchar/iswblank.c
