@@ -3,6 +3,20 @@
 ###################
 
 include(CMakeDependentOption)
+include(CheckIPOSupported)
+
+check_ipo_supported(RESULT lto_supported)
+if("${lto_supported}")
+  option(ENABLE_LTO
+    "Enable link-time optimization"
+    OFF)
+endif()
+
+if(NOT ("${ENABLE_LTO}" AND (${CMAKE_C_COMPILER_ID} STREQUAL Clang OR ${CMAKE_C_COMPILER_ID} STREQUAL AppleClang)))
+  set(OPTION_DISABLE_BUILTINS_IS_ENABLED True)
+else()
+  set(OPTION_DISABLE_BUILTINS_IS_ENABLED False)
+endif()
 
 option(HIDE_UNIMPLEMENTED_C_APIS
 	"Make unimplemented libc functions invisible to the compiler."
@@ -10,9 +24,6 @@ option(HIDE_UNIMPLEMENTED_C_APIS
 option(ENABLE_GNU_EXTENSIONS
   "Enable GNU extensions to the standard libc functions."
   OFF)
-option(DISABLE_BUILTINS
-  "Disable compiler builtins (-fno-builtin)."
-  ON)
 option(DISABLE_STACK_PROTECTION
   "Disable stack smashing protection (-fno-stack-protector)."
   ON)
@@ -23,11 +34,20 @@ CMAKE_DEPENDENT_OPTION(LIBC_BUILD_TESTING
   "Enable libc testing even when used as an external project."
   OFF
   "NOT CMAKE_CROSSCOMPILING" OFF)
+CMAKE_DEPENDENT_OPTION(DISABLE_BUILTINS
+  "Disable compiler builtins (-fno-builtin)."
+  ON
+  "${OPTION_DISABLE_BUILTINS_IS_ENABLED}"
+  ON)
 
 if((NOT CMAKE_CROSSCOMPILING) AND BUILD_TESTING AND
     (LIBC_BUILD_TESTING OR (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)))
   message("Enabling libc tests.")
   set(LIBC_TESTING_IS_ENABLED ON CACHE INTERNAL "Logic that sets whether testing is enabled on this project")
+endif()
+
+if("${ENABLE_LTO}")
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 ##############################################

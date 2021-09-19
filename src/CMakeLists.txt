@@ -105,9 +105,9 @@ endif()
 foreach(target c c_hosted)
 	target_include_directories(${target}
 		INTERFACE SYSTEM
-			$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
 			${PROJECT_SOURCE_DIR}/include
-			${PROJECT_SOURCE_DIR}/arch/${CMAKE_SYSTEM_PROCESSOR}/include
+			$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
+			$<TARGET_PROPERTY:architecture_specific,INTERFACE_INCLUDE_DIRECTORIES>
 	)
 
 	target_compile_definitions(${target}
