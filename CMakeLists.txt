@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 project(EmbeddedArtistryLibc
 	VERSION 1.0
 	DESCRIPTION "A libc implementation for microcontroller-based embedded systems."
-	LANGUAGES C CXX)
+	LANGUAGES C CXX ASM)
 
 set_property(GLOBAL PROPERTY C_STANDARD 11)
 
@@ -156,12 +156,11 @@ endif()
 # Process Source Tree #
 #######################
 
+add_subdirectory(arch/${CMAKE_SYSTEM_PROCESSOR})
 add_subdirectory(src)
 
 #####################
 # Process Test Tree #
 #####################
 
-if(LIBC_TESTING_IS_ENABLED)
-  add_subdirectory(test)
-endif()
+add_subdirectory(test)
