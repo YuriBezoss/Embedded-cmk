@@ -12,7 +12,10 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR LIBC_BUILD_TESTING)
     include(CTest)
 endif()
 
+include(cmake/AddExecutableWithLinkerScriptDep.cmake)
 include(cmake/CheckAndApplyFlags.cmake)
+include(cmake/Conversions.cmake)
+
 include(BuildOptions.cmake)
 
 ##################
