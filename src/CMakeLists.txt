@@ -59,10 +59,18 @@ target_compile_definitions(gdtoa PRIVATE
 ########
 
 add_library(c STATIC)
-target_link_libraries(c PRIVATE printf)
-
-target_include_directories(c PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(c PUBLIC ${PROJECT_SOURCE_DIR}/arch/x86_64/include)
+target_link_libraries(c PRIVATE printf openlibm)
+target_include_directories(c
+	PRIVATE
+		${PROJECT_SOURCE_DIR}/include
+		${PROJECT_SOURCE_DIR}/arch/x86_64/include
+)
+target_include_directories(c SYSTEM
+	INTERFACE
+		${PROJECT_SOURCE_DIR}/include
+		${PROJECT_SOURCE_DIR}/arch/x86_64/include
+		$<TARGET_PROPERTY:openlibm,INTERFACE_INCLUDE_DIRECTORIES>
+)
 
 # Assert Module
 target_sources(c PRIVATE
