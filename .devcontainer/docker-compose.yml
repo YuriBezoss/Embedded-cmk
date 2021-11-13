@@ -1,0 +1,38 @@
+# Check out this reference https://docs.docker.com/compose/compose-file/
+# for list of available versions, their differences, and the file format in general.
+version: "3.0"
+
+# This is where you declare containers you want to run.
+services:
+
+  # This is the name of the service. One cool thing about it is that is will be a DNS name
+  # in the networks where this service will be present. So when you need to connect this
+  # service from another container you can simply do 'ssh username@ssh-server'.
+  ssh-server:
+
+    # This is the name of the image to use. In this case I intentionally used a nonexistent name.
+    # Because of that when Docker will build the image from the Dockerfile, it will assign this
+    # name to the image. This is not required since I've added 'build' property but giving the
+    # right name could come handy.
+    image: myssh
+
+    # This is equivalent to 'build an image from the Dockerfile in current working directory' or
+    # 'docker build .'
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # This maps host's port 2222 to container's 22. This isn't necessary unless you want to connect
+    # to this container from outside (e.g. from host or another machine). Containers do not
+    # require 'exposure' or any other step to reach one another within one network - they have all
+    # ports open. That is why it is called port forwarding or mapping.
+    ports:
+      - "2222:22"
+
+  # Same image as the server but with a different command to execute.
+  ssh-client:
+    image: myssh
+    build:
+      context: .
+    # Just a loop to run a command every second. Won't work with password, you need a key or some hacks.
+    command: bash -c 'while sleep 1; do ssh root@ssh-server ls /; done'
