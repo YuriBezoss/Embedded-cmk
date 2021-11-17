@@ -34,6 +34,9 @@ if(BUILD_TESTING)
   target_include_directories(printf_tests PRIVATE ${printf_SOURCE_DIR})
   set_target_properties(printf_tests PROPERTIES CXX_STANDARD 11)
 
+  # Re-build + execute tests, printing test information to the console instead of the XML file
+  add_custom_target(test-printf printf_tests)
+
   add_test(NAME Printf.Test
     COMMAND printf_tests -s -r junit -o ${CMAKE_BINARY_DIR}/printf_tests.xml
   )
@@ -82,3 +85,11 @@ endif()
 #######################
 
 add_subdirectory(src)
+
+#####################
+# Process Test Tree #
+#####################
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()

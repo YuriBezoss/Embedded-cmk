@@ -49,3 +49,15 @@ cmake -S . -B build --trace-source=CMakeLists.txt --trace-expand
 ```
 cmake -S . -B build --trace
 ```
+
+
+cmake -S . -B build -G "Ninja" -DCMAKE_MAKE_PROGRAM=C:/foobar/ninja.exe
+
+
+
+
+
+
+
+
+ 

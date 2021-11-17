@@ -13,12 +13,12 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 # Set up a tools dev directory
 WORKDIR /home/dev
 
-# Install Cmake packages
+# Install other packets
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         net-tools iputils-ping openssh-client openssh-server\
         build-essential \
-        cmake gdb make ninja-build\
+        gdb make ninja-build\
         gcovr lcov\
         git git-lfs\
         clang-format clang-tidy \
@@ -31,6 +31,16 @@ RUN apt-get update \
     && tar xvf gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2 \
     && rm gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2 \
     && apt-get clean
+
+# Install Cmake packages
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2-Linux-x86_64.sh \
+      -q -O /tmp/cmake-install.sh \
+      && chmod u+x /tmp/cmake-install.sh \
+      && mkdir /usr/bin/cmake \
+      && /tmp/cmake-install.sh --skip-license --prefix=/usr/bin/cmake \
+      && rm /tmp/cmake-install.sh
+
+ENV PATH="/usr/bin/cmake/bin:${PATH}"
 
 # Run some configuration commands
 RUN mkdir /var/run/sshd
